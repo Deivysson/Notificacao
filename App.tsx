@@ -2,7 +2,7 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import {StyleSheet, Text, View, Button } from 'react-native';
 
-import notifee, { AuthorizationStatus, EventType, AndroidImportance } from '@notifee/react-native'
+import notifee, { AuthorizationStatus, EventType, AndroidImportance, TriggerType, TimestampTrigger } from '@notifee/react-native'
 
 export default function App(){
 
@@ -64,6 +64,31 @@ export default function App(){
     })
   }
 
+  //agendar uma notificação
+  async function handleScheduleNotification(){
+    const date = new Date(Date.now());
+
+    date.setMinutes(date.getMinutes() + 1);
+    // Se usa TimestampTrigger so se tiver usando Typescript
+    const trigger: TimestampTrigger = {
+      type: TriggerType.TIMESTAMP,
+      timestamp: date.getTime()
+    }
+
+    await notifee.createTriggerNotification({
+      title: "Lembrete Estudo",
+      body: 'Estudar JS as 15h30',
+      android: {
+        channelId: 'lembrete',
+        importance: AndroidImportance.HIGH,
+        pressAction: {
+          id: 'default',
+        }
+      }
+    }, trigger)
+
+  }
+
 
   return(
     <View style={styles.container}>
@@ -72,6 +97,12 @@ export default function App(){
       title="Enviar notificação"
       onPress={handleNotificate}
       />
+
+      <Button 
+      title='Agendar Notificação'
+      onPress={handleScheduleNotification}
+      />
+
     </View>
   )
 }
