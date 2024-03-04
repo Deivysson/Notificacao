@@ -1,118 +1,85 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import { useState, useEffect } from 'react';
+import {StyleSheet, Text, View, Button } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import notifee, { AuthorizationStatus, EventType, AndroidImportance } from '@notifee/react-native'
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+export default function App(){
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+  const [statusNotification, setStatusNotification] = useState(true);
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  //Aparecer o pop-up, pedir permissao para mandar notificação
+  useEffect(() => {
+    async function getPermission(){
+      const settings = await notifee.requestPermission();
+      if(settings.authorizationStatus >= AuthorizationStatus.AUTHORIZED){
+        console.log("Permission: ", settings.authorizationStatus)
+        setStatusNotification(true);
+      }else{
+        console.log("Usuario negou a permissão!")
+        setStatusNotification(false);
+      }
+    }
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+    getPermission();
 
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+  }, [])
+
+  //aparecer a notificação na tela quando esta dentro do app
+  useEffect(() => {
+    return notifee.onForegroundEvent(({ type, detail}) => {
+      switch(type){
+        case EventType.DISMISSED:
+          console.log("Usuario descartou a notificação")
+          break;
+        case EventType.PRESS:
+          console.log("Tocou: ", detail.notification)  
+      }
+    })
+  }, [])
+
+//disparar uma notificação
+  async function handleNotificate(){
+    if(!statusNotification){
+      return;
+    }
+
+    const channelId = await notifee.createChannel({
+      id: 'lembrete',
+      name: 'lembrete',
+      vibration: true,
+      importance: AndroidImportance.HIGH
+    })
+
+    await notifee.displayNotification({
+      id: 'lembrete',
+      title: 'Estudar Programação',
+      body: 'Estudar React Native',
+      android: {
+        channelId,
+        pressAction:{
+          id: 'default'
+        }
+      }
+    })
+  }
+
+
+  return(
+    <View style={styles.container}>
+      <Text>App</Text>
+      <Button 
+      title="Enviar notificação"
+      onPress={handleNotificate}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+    </View>
+  )
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  }
 });
-
-export default App;
