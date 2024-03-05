@@ -25,6 +25,20 @@ export default function App(){
 
   }, [])
 
+//Receber notificação fora do App
+notifee.onBackgroundEvent(async({ type, detail }) => {
+  const { notification, pressAction } = detail;
+
+  if(type === EventType.PRESS){
+    console.log("Tocou na notificação background", pressAction?.id)
+    if(notification?.id){
+      await notifee.cancelNotification(notification?.id)
+    }
+  }
+  console.log("Event Backgrund")
+})
+
+
   //aparecer a notificação na tela quando esta dentro do app
   useEffect(() => {
     return notifee.onForegroundEvent(({ type, detail}) => {
@@ -89,6 +103,19 @@ export default function App(){
 
   }
 
+  //Listar notificação
+  async function handleListNotifications(){
+    notifee.getTriggerNotificationIds()
+    .then((ids) => {
+      console.log(ids)
+    })
+  }
+
+  //Cancelar notificação
+  async function handleCancelNotification(){
+    await notifee.cancelNotification("")
+  }
+
 
   return(
     <View style={styles.container}>
@@ -101,6 +128,16 @@ export default function App(){
       <Button 
       title='Agendar Notificação'
       onPress={handleScheduleNotification}
+      />
+
+      <Button 
+      title='Listar notificacoes'
+      onPress={handleListNotifications}
+      />
+
+      <Button 
+      title='Cancelar notificação'
+      onPress={handleCancelNotification}
       />
 
     </View>
