@@ -2,7 +2,7 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import {StyleSheet, Text, View, Button } from 'react-native';
 
-import notifee, { AuthorizationStatus, EventType, AndroidImportance, TriggerType, TimestampTrigger } from '@notifee/react-native'
+import notifee, { AuthorizationStatus, EventType, AndroidImportance, TriggerType, TimestampTrigger, RepeatFrequency } from '@notifee/react-native'
 
 export default function App(){
 
@@ -25,6 +25,8 @@ export default function App(){
 
   }, [])
 
+
+
 //Receber notificação fora do App
 notifee.onBackgroundEvent(async({ type, detail }) => {
   const { notification, pressAction } = detail;
@@ -39,6 +41,8 @@ notifee.onBackgroundEvent(async({ type, detail }) => {
 })
 
 
+
+
   //aparecer a notificação na tela quando esta dentro do app
   useEffect(() => {
     return notifee.onForegroundEvent(({ type, detail}) => {
@@ -51,6 +55,8 @@ notifee.onBackgroundEvent(async({ type, detail }) => {
       }
     })
   }, [])
+
+
 
 //disparar uma notificação
   async function handleNotificate(){
@@ -78,6 +84,8 @@ notifee.onBackgroundEvent(async({ type, detail }) => {
     })
   }
 
+
+
   //agendar uma notificação
   async function handleScheduleNotification(){
     const date = new Date(Date.now());
@@ -86,7 +94,8 @@ notifee.onBackgroundEvent(async({ type, detail }) => {
     // Se usa TimestampTrigger so se tiver usando Typescript
     const trigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
-      timestamp: date.getTime()
+      timestamp: date.getTime(),
+      
     }
 
     await notifee.createTriggerNotification({
@@ -103,6 +112,9 @@ notifee.onBackgroundEvent(async({ type, detail }) => {
 
   }
 
+
+
+
   //Listar notificação
   async function handleListNotifications(){
     notifee.getTriggerNotificationIds()
@@ -114,6 +126,34 @@ notifee.onBackgroundEvent(async({ type, detail }) => {
   //Cancelar notificação
   async function handleCancelNotification(){
     await notifee.cancelNotification("")
+  }
+
+
+
+
+  //agendar recorrentes
+  async function handleScheduleWeekly(){
+    const date = new Date(Date.now());
+
+    date.setMinutes(date.getMinutes() + 1);
+
+    const trigger: TimestampTrigger = {
+      type: TriggerType.TIMESTAMP,
+      timestamp: date.getTime(),
+      repeatFrequency: RepeatFrequency.WEEKLY
+    }
+
+    await notifee.createTriggerNotification({
+      title: 'Lembrete JS',
+      body: ' Estudar',
+      android:{
+        channelId: 'lembrete',
+        importance: AndroidImportance.HIGH,
+        pressAction: {
+          id: 'default',
+        }
+      }
+    }, trigger)
   }
 
 
@@ -138,6 +178,11 @@ notifee.onBackgroundEvent(async({ type, detail }) => {
       <Button 
       title='Cancelar notificação'
       onPress={handleCancelNotification}
+      />
+
+      <Button 
+      title='Notificacao recorrentes'
+      onPress={handleScheduleWeekly}
       />
 
     </View>
